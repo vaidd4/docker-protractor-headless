@@ -14,7 +14,8 @@ To be perfectly honest - it is a [real chrome running on xvfb](http://tobyho.com
 
 ## Supported tags
 
-* chrome58, latest
+* chrome59, latest
+* chrome58
 * chrome56
 * chrome55
 * chrome54
@@ -25,10 +26,10 @@ Please note that chrome57 is not available, as it does not work reliably with Pt
 
 The image in the latest version contains the following packages in their respective versions:
 
-* Chrome - 58
+* Chrome - 59
 * Protractor - 4.0.14
 * Node.js - 6.9.4
-* Chromedriver - 2.31
+* Chromedriver - 2.32
 
 The packages are pinned to those versions so that and they should work together without issues. Pulling in the latest version of Chrome during image build proved unsuccessful at times, because Chromedriver is usually lagging behind with support.
 
@@ -58,6 +59,14 @@ protractor-headless [protractor options]
 
 The image adds `/protractor/node_modules` directory to its `NODE_PATH` environmental variable, so that it can use Jasmine, Mocha or whatever else the project uses from the project's own node modules. Therefore Mocha and Jasmine are no longer included in the image.
 
+## Docker 1.10+
+
+Starting with version [1.10](https://docs.docker.com/release-notes/docker-engine/#1100-2016-02-04), Docker supports the `--shm-size` flag, which renders the cumbersome mapping of `/dev/shm` obsolete. Therefore, in Docker 1.10+ you could run the image as follows:
+
+```
+docker run -it --privileged --rm --net=host --shm-size 2g -v $(pwd):/protractor webnicer/protractor-headless [protractor options]
+```
+
 ## Setting up custom screen resolution
 
 The default screen resolution is **1280x1024** with **24-bit color**. You can set a custom screen resolution and color depth via the **SCREEN_RES** env variable, like this:
@@ -68,9 +77,10 @@ docker run -it --privileged --rm --net=host -e SCREEN_RES=1920x1080x24 -v /dev/s
 
 ## Why mapping `/dev/shm`?
 
-Docker has hardcoded value of 64MB for `/dev/shm`. Because of that you can encounter an error [session deleted becasue of page crash](https://bugs.chromium.org/p/chromedriver/issues/detail?id=1097) on memory intensive pages. The easiest way to mitigate that problem is share `/dev/shm` with the host.
+Docker has hardcoded value of 64MB for `/dev/shm`. Because of that you can encounter an error [session deleted becasue of page crash](https://bugs.chromium.org/p/chromedriver/issues/detail?id=1097) on memory intensive pages.
 
-This needs to be done till `docker build` [gets the option `--shm-size`](https://github.com/docker/docker/issues/2606).
+Up until Docker 1.10 the easiest way to mitigate that problem was to share `/dev/shm` with the host. Starting with Docker 1.10, we can use the option `--shm-size` to set the size of the shared memory to any arbitrary value. I recommend `2g`, however you may want to experiment with this value.
+
 
 ## Why `--privileged`?
 
